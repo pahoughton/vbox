@@ -1,0 +1,27 @@
+# 2019-02-23 (cc) <paul4hough@gmail.com>
+#
+# create a c7g from centos/7
+#
+Vagrant.configure('2') do |cfg|
+  # cfg.vm.box_check_update = false
+
+  vname = 'c7g'
+
+  cfg.vm.define vname do |bcfg|
+    bcfg.vm.box		= 'centos/7'
+    bcfg.vm.hostname	= vname
+    bcfg.vm.provider   'virtualbox' do |vb|
+      vb.name      = vname
+      vb.cpus      = 1
+      vb.memory    = 1024
+    vb.customize ['storageattach', :id,
+                  '--storagectl', 'IDE',
+                  '--port', '0', '--device', '1',
+                  '--type', 'dvddrive',
+                  '--medium', '/usr/share/virtualbox/VBoxGuestAdditions.iso']
+    end
+    bcfg.vm.provision 'ansible' do |ansible|
+      ansible.playbook = "ansible/#{vname}.yml"
+    end
+  end
+end

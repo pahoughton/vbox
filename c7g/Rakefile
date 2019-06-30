@@ -1,0 +1,58 @@
+# 2018-10-13 (cc) <paul4hough@gmail.com>
+#
+
+# 2018-10-10 (cc) <paul4hough@gmail.com>
+#
+# y = rake recurses down (. .. ../..:)
+
+$runstart = Time.now
+
+at_exit {
+  runtime = Time.at(Time.now - $runstart).utc.strftime("%H:%M:%S.%3N")
+  puts "run time: #{runtime}"
+}
+
+task :default do
+  sh 'rake --tasks'
+  exit 1
+end
+
+task :galaxy do
+  sh "ansible-galaxy install -r require-roles.yml -p roles"
+end
+
+task :lint do
+  sh "yamllint ."
+end
+
+task :ansible_syntax do |task, args|
+  sh "ansible-playbook --syntax-check --list-tasks site.yml -i cbed,"
+end
+
+task :prov do |task, args|
+  sh "vagrant provision"
+end
+
+task :package do
+  today = Time.now.utc.strftime("%F")
+  sh "vagrant package --base c7g --output c7g-#{today}.box"
+  sh "vagrant box add --name c7g-test c7g-#{today}.box"
+  sh "cd test && vagrant init c7g-test && vagrant up && vagrant destroy -f"
+  sh "vagrant box remove c7g-test"
+  sh "vagrant box remove c7g"
+  sh "vagrant box add --name c7g c7g-#{today}.box"
+end
+
+task :vup do |task, args|
+  sh "vagrant up"
+end
+
+task :vkill do |task, args|
+  sh "vagrant destroy -f"
+end
+
+task :test, [:backend] do | task, args|
+  Dir.chdir('testinfra') do
+    sh "py.test -v"
+  end
+end

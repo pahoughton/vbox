@@ -1,0 +1,103 @@
+# 2019-06-24 (cc) <paul4hough@gmail.com>
+#
+---
+- name: remove cent base repo
+  become: true
+  ini_file:
+    path: /etc/yum.repos.d/CentOS-Base.repo
+    section: base
+    option: enabled
+    value: 0
+
+- name: remove cent updates repo
+  become: true
+  ini_file:
+    path: /etc/yum.repos.d/CentOS-Base.repo
+    section: updates
+    option: enabled
+    value: 0
+
+- name: remove cent extras repo
+  become: true
+  ini_file:
+    path: /etc/yum.repos.d/CentOS-Base.repo
+    section: extras
+    option: enabled
+    value: 0
+
+- name: rand centos/7 base repo
+  become: true
+  yum_repository:
+    name: rand-base
+    description: centos/7 base rand mirror
+    baseurl: http://rand/yum/cent-7/base
+    gpgcheck: 0
+
+- name: rand centos/7 updates repo
+  become: true
+  yum_repository:
+    name: rand-updates
+    description: centos/7 base rand mirror
+    baseurl: http://rand/yum/cent-7/updates
+    gpgcheck: 0
+
+- name: rand centos/7 extras repo
+  become: true
+  yum_repository:
+    name: rand-extras
+    description: centos/7 extras rand mirror
+    baseurl: http://rand/yum/cent-7/extras
+    gpgcheck: 0
+
+- name: rand epel repo
+  become: true
+  yum_repository:
+    name: rand-epel
+    description: epel rand mirror
+    baseurl: http://rand/yum/epel
+    gpgcheck: 0
+
+- name: yum-clean-metadata
+  become: true
+  command: yum clean metadata
+  args:
+    warn: no
+
+- name: update yum cache
+  become: true
+  yum:
+    name: "*"
+    update_cache: true
+    state: latest
+
+- name: add vagrant.pub
+  authorized_key:
+    state: present
+    user: "vagrant"
+    key: "{{ lookup('file', 'vagrant.pub') }}"
+
+- name: install base packages
+  become: true
+  package:
+    name:
+      - python-pip
+      - emacs
+      - xterm
+      - make
+      - automake
+      - git
+
+- name: mkdir wip
+  file:
+    path: wip
+    state: directory
+
+- name: clone login-utils
+  git:
+    repo: https://github.com/pahoughton/login-utils
+    dest: wip/login-utils
+
+- name: install login-utils
+  shell: autoreconf && ./configure && make install
+  args:
+    chdir: wip/login-utils

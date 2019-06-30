@@ -1,0 +1,24 @@
+# 2019-06-30 (cc) <paul4hough@gmail.com>
+#
+---
+- name: install guest dep pkgs
+  become: true
+  package:
+    name:
+      - gcc
+      - kernel-devel
+      - kernel-headers
+      - dkms
+      - make
+      - bzip2
+      - perl
+
+- name: mount guest iso
+  become: true
+  shell: mount /dev/sr0 /mnt
+
+- name: run install guest
+  become: true
+  shell: ./VBoxLinuxAdditions.run
+  args:
+    chdir: /mnt
